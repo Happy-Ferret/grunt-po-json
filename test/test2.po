@@ -40,3 +40,8 @@ msgstr ""
 #~ msgid "Commented id"
 #~ msgstr "Commented str"
 
+
+msgid "%d second ago"
+msgid_plural "%d secondS ago"
+msgstr[0] "%d second ago"
+msgstr[1] "%d secondS ago"
