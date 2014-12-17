@@ -95,80 +95,41 @@ module.exports = function(grunt) {
 
     };
 
+	
+	
+	
+	
+	
     /**
      * Accepts the contents of a po file, and puts all translations in the target Object.
+	 * NB: this function was rewritten for this fork 
      *
      * @param {String} poStr the contents of a po file.
-     * @param {Object=} target Target object. If not specified, creates new object
-     * @param {String} sourceName Used for logging only.
-     * @param {Boolean} includeCommented pass true to include translations that are commented out.
      * @returns {Object} The translations in name-value pairs.
      */
-    var poStrToObject = function(poStr, target, sourceName, includeCommented)
+    var poStrToObject = function(poStr)
     {
-        target || (target = {});
-        grunt.log.writeln('Reading ' + sourceName + '...');
-        var id = '', str = '',
-            match,
-            line,
-            mode = 0;
+		// Prepare output
+        var output = {"toto":"tata"};
+		
+		// Split input in lines
+		var lines = poStr.split(/[\r\n]+/g);
 
-        for (var i= 0, arr = poStr.split(/[\r\n]/g), max = arr.length; i<max; line = arr[i++])
-        {
-            if (!line || line.charAt(0) == '#' && !includeCommented)
-                continue;
-
-            switch (mode)
-            {
-                case 0:
-                    match = line.match(findID);
-                    if (match)
-                    {
-                        // id - str pair complete, put into out
-                        if (id && str)
-                        {
-                            target[id] = str;
-                            grunt.verbose.writeln('['[h] + sourceName + '] '[h] + ('"'+id+'"')[pn] + ': ' + ('"'+str+'"')[tn]);
-                        }
-                        // start new id
-                        id = match[1];
-                        str = '';
-                        mode = 1;
-                        break;
-                    }
-                    match = line.match(find);
-                    if (match)
-                    {
-                        // append to existing str
-                        str += strReturn + match[1];
-                        break;
-                    }
-                    break;
-                case 1:
-                    match = line.match(findStr);
-                    if (match)
-                    {
-                        // start new str
-                        str = match[1];
-                        mode = 0;
-                        break;
-                    }
-                    match = line.match(find);
-                    if (match)
-                    // append to existing id
-                        id += idReturn + match[1];
-                    break;
-            }
+        for (var i = 0; i < lines.length; i++){
+		
+		
+            
         }
-        // Write final result as well...
-        if (id && str)
-        {
-            target[id] = str;
-            grunt.verbose.writeln('['[h] + sourceName + '] '[h] + ('"'+id+'"')[pn] + ': ' + ('"'+str+'"')[tn]);
-        }
-        return target;
+		
+        return output;
     };
 
+	
+	
+	
+	
+	
+	
     // Debug tool: view object properties
     function viewObj(text, target)
     {
