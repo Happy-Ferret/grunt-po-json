@@ -107,22 +107,207 @@ module.exports = function(grunt) {
      * @param {String} poStr the contents of a po file.
      * @returns {Object} The translations in name-value pairs.
      */
-    var poStrToObject = function(poStr)
-    {
+	var poStrToObject = function(poStr, target)
+	{
 		// Prepare output
-        var output = {"toto":"tata"};
-		
+		var target = target || {};
+
 		// Split input in lines
 		var lines = poStr.split(/[\r\n]+/g);
 
-        for (var i = 0; i < lines.length; i++){
-		
-		
-            
-        }
-		
-        return output;
-    };
+		// Next information to read:
+		// 0: msgid
+		// 1: comment msgstr
+		// 2: regular msgstr or msgid_plural
+		// 3: msgstr[0]
+		// 4: msgstr[1]
+
+		var next = 0;
+
+		var id = "", id_plural = "", msg = "", msg_plural = "";
+
+		// Loop on lines
+		for (var i = 0; i < lines.length; i++){
+
+			console.log("=====");
+
+			// Ignore empty lines
+			if(/^ *$/.test(lines[i])){
+				continue
+			}
+
+			// Ignore comments ("# ...")
+			if(/^ *#.*$/.test(lines[i])){
+				continue
+			}
+
+			// Ignore contexts ("msgctxt ...")
+			if(/^ *msgctxt.*$/.test(lines[i])){
+				continue
+			}
+
+			// Switch on the next thing to read
+			switch(next){
+
+				// msgid
+				case 0:
+
+					id = "";
+
+					// Empty msgid
+					if(lines[i] == 'msgid ""'){
+
+						// Case 1: next line is a "msgstr" (comment)
+						if(/^ *msgstr/.test(lines[i+1])){
+							next = 1;
+						}
+
+						// Case 2: the next line(s) contain a multiline msgid
+						// => read id on multiple lines
+						else {
+
+							while(/^ *".*"$/.test(lines[i+1])){
+								id += /^ *"(.*)"$/.exec(lines[i+1])[1];
+								i++;
+							}
+
+							next = 2;
+						}
+					}
+
+					// Not empty msgid
+					// => Save it in id
+					else {
+						id = /msgid "(.*)"/.exec(lines[i])[1];
+						next = 2;
+					}
+
+					console.log("id: ", id);
+					console.log("next: ", next);
+
+					break;
+
+				// msgstr comment
+				case 1:
+
+					while(/^".*"$/.test(lines[i+1])){
+						i++;
+					}
+					next = 0;
+					console.log("next: ", next);
+
+					break;
+
+				// msgstr or msgid_plural
+				case 2:
+
+					// msgstr
+					if(/^ *msgstr/.test(lines[i])){
+
+						msg = "";
+
+						// Multiline (if first line is empty)
+						if(lines[i] == 'msgstr ""'){
+							while(/^ *".*"$/.test(lines[i+1])){
+								msg += /^ *"(.*)"$/.exec(lines[i+1])[1];
+								i++;
+							}
+							next = 0;
+						}
+
+						// Single line
+						else {
+							msg = /msgstr "(.*)"/.exec(lines[i])[1];
+							next = 0;
+						}
+
+						console.log("msg: ", msg);
+						console.log("next: ", next);
+						target[id] = msg;
+					}
+
+					// msgid_plural
+					else if(/^ *msgid_plural/.test(lines[i])){
+
+						id_plural = "";
+
+						// Multiline (if first line is empty)
+						if(lines[i] == 'msgid_plural ""'){
+							while(/^ *".*"$/.test(lines[i+1])){
+								id_plural += /^ *"(.*)"$/.exec(lines[i+1])[1];
+								i++;
+							}
+							next = 3;
+						}
+
+						// Single line
+						else {
+							id_plural = /msgid_plural "(.*)"/.exec(lines[i])[1];
+							next = 3;
+						}
+
+						console.log("id_plural: ", id_plural);
+						console.log("next: ", next);
+					}
+
+					break;
+
+				// msgstr[0]
+				case 3:
+
+					msg = "";
+
+					// Multiline (if first line is empty)
+					if(lines[i] == 'msgstr[0] ""'){
+						while(/^ *".*"$/.test(lines[i+1])){
+							msg += /^ *"(.*)"$/.exec(lines[i+1])[1];
+							i++;
+						}
+						next = 4;
+					}
+
+					// Single line
+					else {
+						msg = /msgstr\[0\] "(.*)"/.exec(lines[i])[1];
+						next = 4;
+					}
+
+					console.log("msg: ", msg);
+					console.log("next: ", next);
+
+					break;
+
+				// msgstr[1]
+				case 4:
+
+					msg_plural = "";
+
+					// Multiline (if first line is empty)
+					if(lines[i] == 'msgstr[1] ""'){
+						while(/^ *".*"$/.test(lines[i+1])){
+							msg_plural += /^ *"(.*)"$/.exec(lines[i+1])[1];
+							i++;
+						}
+						next = 0;
+					}
+
+					// Single line
+					else {
+						msg_plural = /msgstr\[1\] "(.*)"/.exec(lines[i])[1];
+						next = 0;
+					}
+
+					target[id] = msg;
+					target[id_plural] = msg_plural;
+					console.log("msg: ", msg);
+					console.log("next: ", next);
+
+					break;
+			}
+		}
+
+		return target;
+	};
 
 	
 	
