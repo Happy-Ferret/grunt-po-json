@@ -72,7 +72,7 @@ module.exports = function(grunt) {
         }
 
         // Seems to still process the gigantic string...
-        returnStr = JSON.stringify(returnObj);
+        returnStr = JSON.stringify(returnObj).replace(/\\\\/g,"");
         if (amd)
             returnStr = 'define(' + returnStr + ');';
         grunt.file.write(destPath, returnStr);
@@ -109,6 +109,7 @@ module.exports = function(grunt) {
      */
 	var poStrToObject = function(poStr, target)
 	{
+		
 		// Prepare output
 		var target = target || {};
 
@@ -305,7 +306,6 @@ module.exports = function(grunt) {
 					break;
 			}
 		}
-
 		return target;
 	};
 
