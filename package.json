@@ -1,7 +1,7 @@
 {
   "name": "grunt-po-json-pluralize",
   "description": "Converts one or more po files to a single json or amd module.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "homepage": "https://github.com/Qwant/grunt-po-json",
   "author": {
     "name": "Qwant",
