@@ -129,7 +129,7 @@ module.exports = function(grunt) {
 		// Loop on lines
 		for (var i = 0; i < lines.length; i++){
 
-			console.log("=====");
+
 
 			// Ignore empty lines
 			if(/^ *$/.test(lines[i])){
@@ -182,8 +182,8 @@ module.exports = function(grunt) {
 						next = 2;
 					}
 
-					console.log("id: ", id);
-					console.log("next: ", next);
+
+
 
 					break;
 
@@ -194,7 +194,7 @@ module.exports = function(grunt) {
 						i++;
 					}
 					next = 0;
-					console.log("next: ", next);
+
 
 					break;
 
@@ -221,8 +221,8 @@ module.exports = function(grunt) {
 							next = 0;
 						}
 
-						console.log("msg: ", msg);
-						console.log("next: ", next);
+
+
 						target[id] = msg;
 					}
 
@@ -246,8 +246,8 @@ module.exports = function(grunt) {
 							next = 3;
 						}
 
-						console.log("id_plural: ", id_plural);
-						console.log("next: ", next);
+
+
 					}
 
 					break;
@@ -272,8 +272,8 @@ module.exports = function(grunt) {
 						next = 4;
 					}
 
-					console.log("msg: ", msg);
-					console.log("next: ", next);
+
+
 
 					break;
 
@@ -299,8 +299,8 @@ module.exports = function(grunt) {
 
 					target[id] = msg;
 					target[id_plural] = msg_plural;
-					console.log("msg: ", msg);
-					console.log("next: ", next);
+
+
 
 					break;
 			}
