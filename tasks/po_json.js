@@ -158,7 +158,9 @@ module.exports = function(grunt) {
 					if (options_tmp[k] != "") {
 						var option = options_tmp[k];
 						var l = option.indexOf(': ');
-						options[option.slice(0,l)] = option.slice(l+2);
+						if (option.slice(0,l) == "Plural-Forms") {
+							options['plural'] = option.slice(l+2);
+						}
 					}
 				}
 			}
