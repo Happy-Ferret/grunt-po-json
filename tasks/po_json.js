@@ -72,7 +72,9 @@ module.exports = function(grunt) {
 		}
 
 		// Seems to still process the gigantic string...
-		returnStr = JSON.stringify(returnObj).replace(/\\\\/g,"");
+		returnStr = '{\n  getPlural: function(n) { ' + returnObj.options.plural + ' return plural; },';
+		returnStr += '\n  entries: ' + JSON.stringify(returnObj.entries).replace(/\\\\/g,"") + '\n}';
+
 		if (amd)
 			returnStr = 'define(' + returnStr + ');';
 		grunt.file.write(destPath, returnStr);
