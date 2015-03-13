@@ -10,106 +10,106 @@
 
 module.exports = function(grunt) {
 
-    // Configuration of postStrToObject
-    var idReturn = '',
-        strReturn = '',
-        findID = /msgid\s+"(.*?)"$/,
-        findStr = /msgstr\s+"(.*?)"$/,
-        find = /"(.*?)"/,
-        h = 'yellow',
-        pn = 'white',
-        tn = 'grey';
+	// Configuration of postStrToObject
+	var idReturn = '',
+		strReturn = '',
+		findID = /msgid\s+"(.*?)"$/,
+		findStr = /msgstr\s+"(.*?)"$/,
+		find = /"(.*?)"/,
+		h = 'yellow',
+		pn = 'white',
+		tn = 'grey';
 
-    grunt.registerMultiTask('po_json', 'Converts one or more po files to a single json or amd module.', function()
-    {
-        var options = this.options(),
-            files = this.data.files;
+	grunt.registerMultiTask('po_json', 'Converts one or more po files to a single json or amd module.', function()
+	{
+		var options = this.options(),
+			files = this.data.files;
 
-        if (this.files.length == 0)
-        {
-            grunt.log.warn('Task "' + this.target +'" contains no files to convert. Omitting...');
-            return;
-        }
+		if (this.files.length == 0)
+		{
+			grunt.log.warn('Task "' + this.target +'" contains no files to convert. Omitting...');
+			return;
+		}
 
-        for (var name in files)
-        {
-            if (!files.hasOwnProperty(name))
-                continue;
-            convertTask(files[name], name, options);
-        }
-    });
+		for (var name in files)
+		{
+			if (!files.hasOwnProperty(name))
+				continue;
+			convertTask(files[name], name, options);
+		}
+	});
 
-    /**
-     * The actual convert task. Reads the file(s) in src and writes to dest.
-     *
-     * @param {String|Object} src accepts a path or a {[ns]: [path]} formatted object.
-     * @param {String} destPath the destination path for the file.
-     * @param {Object} options pass this.options() here.
-     */
-    var convertTask = function(src, destPath, options)
-    {
-        var poStr,
-            returnObj = {},
-            returnStr,
-            amd = options.amd || false;
+	/**
+	 * The actual convert task. Reads the file(s) in src and writes to dest.
+	 *
+	 * @param {String|Object} src accepts a path or a {[ns]: [path]} formatted object.
+	 * @param {String} destPath the destination path for the file.
+	 * @param {Object} options pass this.options() here.
+	 */
+	var convertTask = function(src, destPath, options)
+	{
+		var poStr,
+			returnObj = {},
+			returnStr,
+			amd = options.amd || false;
 
-        switch (grunt.util.kindOf(src))
-        {
-            case "string":
-                (poStr = safeReadFile(src)) && (poStrToObject(poStr, returnObj, src));
-                break;
+		switch (grunt.util.kindOf(src))
+		{
+			case "string":
+				(poStr = safeReadFile(src)) && (poStrToObject(poStr, returnObj, src));
+				break;
 
-            case "object":
-                // assume multiple, nested, src
-                for (var namespace in src)
-                {
-                    if (!src.hasOwnProperty(namespace))
-                        continue;
+			case "object":
+				// assume multiple, nested, src
+				for (var namespace in src)
+				{
+					if (!src.hasOwnProperty(namespace))
+						continue;
 
-                    (poStr = safeReadFile(src[namespace])) && (returnObj[namespace] = {}) && (poStrToObject(poStr, returnObj[namespace], src[namespace]));
-                }
-                break;
-        }
+					(poStr = safeReadFile(src[namespace])) && (returnObj[namespace] = {}) && (poStrToObject(poStr, returnObj[namespace], src[namespace]));
+				}
+				break;
+		}
 
-        // Seems to still process the gigantic string...
-        returnStr = JSON.stringify(returnObj).replace(/\\\\/g,"");
-        if (amd)
-            returnStr = 'define(' + returnStr + ');';
-        grunt.file.write(destPath, returnStr);
-        grunt.log.writeln('File "' + destPath + '" created.');
-    };
+		// Seems to still process the gigantic string...
+		returnStr = JSON.stringify(returnObj).replace(/\\\\/g,"");
+		if (amd)
+			returnStr = 'define(' + returnStr + ');';
+		grunt.file.write(destPath, returnStr);
+		grunt.log.writeln('File "' + destPath + '" created.');
+	};
 
-    /**
-     * Generic read file and return content if exists.
-     * @param path
-     * @returns {*}
-     */
-    var safeReadFile = function(path)
-    {
-        if (!grunt.file.exists(path)) {
-            grunt.log.warn('Source file "' + path + '" not found.');
-            return null;
-        } else {
-            return grunt.file.read(path);
-        }
+	/**
+	 * Generic read file and return content if exists.
+	 * @param path
+	 * @returns {*}
+	 */
+	var safeReadFile = function(path)
+	{
+		if (!grunt.file.exists(path)) {
+			grunt.log.warn('Source file "' + path + '" not found.');
+			return null;
+		} else {
+			return grunt.file.read(path);
+		}
 
-    };
+	};
 
-	
-	
-	
-	
-	
-    /**
-     * Accepts the contents of a po file, and puts all translations in the target Object.
-	 * NB: this function was rewritten for this fork 
-     *
-     * @param {String} poStr the contents of a po file.
-     * @returns {Object} The translations in name-value pairs.
-     */
+
+
+
+
+
+	/**
+	 * Accepts the contents of a po file, and puts all translations in the target Object.
+	 * NB: this function was rewritten for this fork
+	 *
+	 * @param {String} poStr the contents of a po file.
+	 * @returns {Object} The translations in name-value pairs.
+	 */
 	var poStrToObject = function(poStr, target)
 	{
-		
+
 		// Prepare output
 		var target = target || {};
 
@@ -122,6 +122,7 @@ module.exports = function(grunt) {
 		// 2: regular msgstr or msgid_plural
 		// 3: msgstr[0]
 		// 4: msgstr[1]
+		// 5: msgstr[2]
 
 		var next = 0;
 
@@ -129,8 +130,6 @@ module.exports = function(grunt) {
 
 		// Loop on lines
 		for (var i = 0; i < lines.length; i++){
-
-
 
 			// Ignore empty lines
 			if(/^ *$/.test(lines[i])){
@@ -147,6 +146,8 @@ module.exports = function(grunt) {
 				continue
 			}
 
+			//console.log(i+" | "+next+" | "+lines[i]);
+
 			// Switch on the next thing to read
 			switch(next){
 
@@ -154,37 +155,35 @@ module.exports = function(grunt) {
 				case 0:
 
 					id = "";
+					next = 0;
 
-					// Empty msgid
-					if(lines[i] == 'msgid ""'){
-
-						// Case 1: next line is a "msgstr" (comment)
-						if(/^ *msgstr/.test(lines[i+1])){
-							next = 1;
-						}
-
-						// Case 2: the next line(s) contain a multiline msgid
-						// => read id on multiple lines
-						else {
-
-							while(/^ *".*"$/.test(lines[i+1])){
-								id += /^ *"(.*)"$/.exec(lines[i+1])[1];
-								i++;
+					if (/msgid /.test(lines[i])) {
+						// Empty msgid
+						if(lines[i] == 'msgid ""'){
+							// Case 1: next line is a "msgstr" (comment)
+							if(/^ *msgstr/.test(lines[i+1])){
+								next = 1;
 							}
 
+							// Case 2: the next line(s) contain a multiline msgid
+							// => read id on multiple lines
+							else {
+
+								while(/^ *".*"$/.test(lines[i+1])){
+									id += /^ *"(.*)"$/.exec(lines[i+1])[1];
+									i++;
+								}
+								next = 2;
+							}
+						}
+
+						// Not empty msgid
+						// => Save it in id
+						else {
+							id = /msgid "(.*)"/.exec(lines[i])[1];
 							next = 2;
 						}
 					}
-
-					// Not empty msgid
-					// => Save it in id
-					else {
-						id = /msgid "(.*)"/.exec(lines[i])[1];
-						next = 2;
-					}
-
-
-
 
 					break;
 
@@ -195,7 +194,6 @@ module.exports = function(grunt) {
 						i++;
 					}
 					next = 0;
-
 
 					break;
 
@@ -213,16 +211,14 @@ module.exports = function(grunt) {
 								msg += /^ *"(.*)"$/.exec(lines[i+1])[1];
 								i++;
 							}
-							next = 0;
 						}
 
 						// Single line
 						else {
 							msg = /msgstr "(.*)"/.exec(lines[i])[1];
-							next = 0;
 						}
 
-
+						next = 0;
 
 						target[id] = msg;
 					}
@@ -238,17 +234,14 @@ module.exports = function(grunt) {
 								id_plural += /^ *"(.*)"$/.exec(lines[i+1])[1];
 								i++;
 							}
-							next = 3;
 						}
 
 						// Single line
 						else {
 							id_plural = /msgid_plural "(.*)"/.exec(lines[i])[1];
-							next = 3;
 						}
 
-
-
+						next = 3;
 					}
 
 					break;
@@ -264,17 +257,14 @@ module.exports = function(grunt) {
 							msg += /^ *"(.*)"$/.exec(lines[i+1])[1];
 							i++;
 						}
-						next = 4;
 					}
 
 					// Single line
 					else {
 						msg = /msgstr\[0\] "(.*)"/.exec(lines[i])[1];
-						next = 4;
 					}
 
-
-
+					next = 4;
 
 					break;
 
@@ -289,19 +279,44 @@ module.exports = function(grunt) {
 							msg_plural += /^ *"(.*)"$/.exec(lines[i+1])[1];
 							i++;
 						}
-						next = 0;
 					}
 
 					// Single line
 					else {
 						msg_plural = /msgstr\[1\] "(.*)"/.exec(lines[i])[1];
-						next = 0;
 					}
 
+					next = 5;
 					target[id] = msg;
 					target[id_plural] = msg_plural;
 
+					break;
 
+				// msgstr[2]
+				case 5:
+
+					next = 0;
+
+					if (/msgstr\[2\]/.test(lines[i])) {
+						msg_plural = "";
+
+						// Multiline (if first line is empty)
+						if(lines[i] == 'msgstr[2] ""'){
+							while(/^ *".*"$/.test(lines[i+1])){
+								msg_plural += /^ *"(.*)"$/.exec(lines[i+1])[1];
+								i++;
+							}
+						}
+
+						// Single line
+						else {
+							msg_plural = /msgstr\[2\] "(.*)"/.exec(lines[i])[1];
+						}
+
+						next = 0;
+						target[id] = msg;
+						target[id_plural] = msg_plural;
+					}
 
 					break;
 			}
@@ -309,25 +324,20 @@ module.exports = function(grunt) {
 		return target;
 	};
 
-	
-	
-	
-	
-	
-	
-    // Debug tool: view object properties
-    function viewObj(text, target)
-    {
-        var h = 'yellow',
-            type,
-            content;
-        if (text)
-            grunt.log.writeln(text[h]);
-        for (var name in target)
-        {
-            type = grunt.util.kindOf(target[name]);
-            content = (target[name] + '').match(/^.*?$/m);
-            grunt.log.writeln((' - {' + type + '} ')[h] + name + ': ' + content[0].grey);
-        }
-    }
+
+	// Debug tool: view object properties
+	function viewObj(text, target)
+	{
+		var h = 'yellow',
+			type,
+			content;
+		if (text)
+			grunt.log.writeln(text[h]);
+		for (var name in target)
+		{
+			type = grunt.util.kindOf(target[name]);
+			content = (target[name] + '').match(/^.*?$/m);
+			grunt.log.writeln((' - {' + type + '} ')[h] + name + ': ' + content[0].grey);
+		}
+	}
 };
