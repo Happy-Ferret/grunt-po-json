@@ -56,7 +56,7 @@ module.exports = function(grunt) {
 		switch (grunt.util.kindOf(src))
 		{
 			case "string":
-				(poStr = safeReadFile(src)) && (poStrToObject(poStr, returnObj, src));
+				(poStr = safeReadFile(src)) && (returnObj = poStrToObject(poStr, returnObj, src));
 				break;
 
 			case "object":
@@ -66,7 +66,7 @@ module.exports = function(grunt) {
 					if (!src.hasOwnProperty(namespace))
 						continue;
 
-					(poStr = safeReadFile(src[namespace])) && (returnObj[namespace] = {}) && (poStrToObject(poStr, returnObj[namespace], src[namespace]));
+					(poStr = safeReadFile(src[namespace])) && (returnObj[namespace] = {}) && (returnObj = poStrToObject(poStr, returnObj[namespace], src[namespace]));
 				}
 				break;
 		}
@@ -108,6 +108,8 @@ module.exports = function(grunt) {
 
 		// Prepare output
 		var target = target || {};
+		var options = {};
+		var entries = {};
 
 		// Split input in lines
 		var lines = poStr.split(/[\r\n]+/g);
@@ -119,52 +121,65 @@ module.exports = function(grunt) {
 		// 3: msgstr[0]
 		// 4: msgstr[1]
 		// 5: msgstr[2]
-
 		var next = 0;
 
-		var id = "", id_plural = "", msg = "", msg_plural = "";
+		var pluralCount = 0;
+		var regex = '';
+		var j = 0;
+
+		var id = "", id_plural = "", msg = "", msg_plural = "", msg_options = "";
 
 		// Loop on lines
 		for (var i = 0; i < lines.length; i++) {
 
 			// Ignore empty lines
-			if(/^ *$/.test(lines[i])) {
+			if (/^ *$/.test(lines[i])) {
 				continue;
 			}
 
 			// Ignore comments ("# ...")
-			if(/^ *#.*$/.test(lines[i])) {
+			if (/^ *#.*$/.test(lines[i])) {
 				continue;
 			}
 
 			// Ignore contexts ("msgctxt ...")
-			if(/^ *msgctxt.*$/.test(lines[i])) {
+			if (/^ *msgctxt.*$/.test(lines[i])) {
 				continue;
 			}
 
-			//console.log(i+" | "+next+" | "+lines[i]);
+			if (msg_options == "" && /msgid ""/.test(lines[i])) {
+				j = i + 1;
+				while (/^".*"$/.test(lines[j+1])) {
+					msg_options += /^"(.*)"$/.exec(lines[j+1])[1];
+					j++;
+				}
+				var options_tmp = msg_options.split("\\n");
+				for (var k = 0, n = options_tmp.length; k < n; k++) {
+					if (options_tmp[k] != "") {
+						var option = options_tmp[k];
+						var l = option.indexOf(': ');
+						options[option.slice(0,l)] = option.slice(l+2);
+					}
+				}
+			}
 
 			// Switch on the next thing to read
 			switch(next) {
 
 				// msgid
 				case 0:
-
 					id = "";
 					next = 0;
-
 					if (/msgid /.test(lines[i])) {
 						// Empty msgid
-						if(lines[i] == 'msgid ""') {
+						if (lines[i] == 'msgid ""') {
 							// Case 1: next line is a "msgstr" (comment)
 							if(/^ *msgstr/.test(lines[i+1])) {
 								next = 1;
 							}
-
 							// Case 2: the next line(s) contain a multiline msgid
 							// => read id on multiple lines
 							else {
-
 								while(/^ *".*"$/.test(lines[i+1])) {
 									id += /^ *"(.*)"$/.exec(lines[i+1])[1];
 									i++;
@@ -172,7 +187,6 @@ module.exports = function(grunt) {
 								next = 2;
 							}
 						}
-
 						// Not empty msgid
 						// => Save it in id
 						else {
@@ -180,27 +194,21 @@ module.exports = function(grunt) {
 							next = 2;
 						}
 					}
-
 					break;
 
 				// msgstr comment
 				case 1:
-
 					while(/^".*"$/.test(lines[i+1])) {
 						i++;
 					}
 					next = 0;
-
 					break;
 
 				// msgstr or msgid_plural
 				case 2:
-
 					// msgstr
 					if(/^ *msgstr/.test(lines[i])) {
-
 						msg = "";
-
 						// Multiline (if first line is empty)
 						if(lines[i] == 'msgstr ""') {
 							while(/^ *".*"$/.test(lines[i+1])) {
@@ -208,22 +216,16 @@ module.exports = function(grunt) {
 								i++;
 							}
 						}
-
 						// Single line
 						else {
 							msg = /msgstr "(.*)"/.exec(lines[i])[1];
 						}
-
 						next = 0;
-
-						target[id] = msg;
+						entries[id] = msg;
 					}
-
 					// msgid_plural
 					else if(/^ *msgid_plural/.test(lines[i])) {
-
 						id_plural = "";
-
 						// Multiline (if first line is empty)
 						if(lines[i] == 'msgid_plural ""') {
 							while(/^ *".*"$/.test(lines[i+1])){
@@ -235,7 +237,6 @@ module.exports = function(grunt) {
 						else {
 							id_plural = /msgid_plural "(.*)"/.exec(lines[i])[1];
 						}
-
 						next = 3;
 					}
 
@@ -243,11 +244,9 @@ module.exports = function(grunt) {
 
 				// msgstr[0]
 				case 3:
-
 					msg = "";
-
 					// Multiline (if first line is empty)
-					if(lines[i] == 'msgstr[0] ""') {
+					if (lines[i] == 'msgstr[0] ""') {
 						while(/^ *".*"$/.test(lines[i+1])){
 							msg += /^ *"(.*)"$/.exec(lines[i+1])[1];
 							i++;
@@ -257,71 +256,52 @@ module.exports = function(grunt) {
 					else {
 						msg = /msgstr\[0\] "(.*)"/.exec(lines[i])[1];
 					}
-
 					if (/msgstr\[1\]/.test(lines[i+1])) {
+						pluralCount = 0;
+						entries[id_plural] = new Array();
 						next = 4;
 					} else {
 						next = 0;
 					}
+					entries[id] = msg;
 
 					break;
+			}
 
-				// msgstr[1]
-				case 4:
-
+			// Multi plural
+			if (next > 3) {
+				regex = new RegExp('msgstr\\[' + pluralCount + '\\]');
+				if (regex.test(lines[i])) {
 					msg_plural = "";
-
 					// Multiline (if first line is empty)
-					if(lines[i] == 'msgstr[1] ""') {
-						while(/^ *".*"$/.test(lines[i+1])) {
+					if (lines[i] == 'msgstr[' + pluralCount + '] ""') {
+						while(/^ *".*"$/.test(lines[i+1])){
 							msg_plural += /^ *"(.*)"$/.exec(lines[i+1])[1];
 							i++;
 						}
 					}
 					// Single line
 					else {
-						msg_plural = /msgstr\[1\] "(.*)"/.exec(lines[i])[1];
+						regex = new RegExp('msgstr\\[' + pluralCount + '\\] "(.*)"', "g");
+						msg_plural = regex.exec(lines[i])[1];
 					}
+					entries[id_plural][pluralCount] = msg_plural;
+				}
 
-					target[id] = msg;
-					target[id_plural] = msg_plural;
-
-					if (/msgstr\[2\]/.test(lines[i+1])) {
-						next = 5;
-					} else {
-						next = 0;
-					}
-
-					break;
-
-				// msgstr[2]
-				case 5:
-
-					if (/msgstr\[2\]/.test(lines[i])) {
-						msg_plural = "";
-
-						// Multiline (if first line is empty)
-						if(lines[i] == 'msgstr[2] ""') {
-							while(/^ *".*"$/.test(lines[i+1])){
-								msg_plural += /^ *"(.*)"$/.exec(lines[i+1])[1];
-								i++;
-							}
-						}
-						// Single line
-						else {
-							msg_plural = /msgstr\[2\] "(.*)"/.exec(lines[i])[1];
-						}
-
-						target[id] = msg;
-						target[id_plural] = msg_plural;
-					}
-
+				if (/msgstr\[/.test(lines[i+1])) {
+					next++;
+					pluralCount++;
+				} else {
 					next = 0;
-
-					break;
+				}
 			}
-
 		}
+
+		target = {
+			options: options,
+			entries: entries
+		};
+
 		return target;
 	};
 
