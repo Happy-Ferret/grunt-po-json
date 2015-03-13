@@ -96,10 +96,6 @@ module.exports = function(grunt) {
 	};
 
 
-
-
-
-
 	/**
 	 * Accepts the contents of a po file, and puts all translations in the target Object.
 	 * NB: this function was rewritten for this fork
@@ -129,27 +125,27 @@ module.exports = function(grunt) {
 		var id = "", id_plural = "", msg = "", msg_plural = "";
 
 		// Loop on lines
-		for (var i = 0; i < lines.length; i++){
+		for (var i = 0; i < lines.length; i++) {
 
 			// Ignore empty lines
-			if(/^ *$/.test(lines[i])){
-				continue
+			if(/^ *$/.test(lines[i])) {
+				continue;
 			}
 
 			// Ignore comments ("# ...")
-			if(/^ *#.*$/.test(lines[i])){
-				continue
+			if(/^ *#.*$/.test(lines[i])) {
+				continue;
 			}
 
 			// Ignore contexts ("msgctxt ...")
-			if(/^ *msgctxt.*$/.test(lines[i])){
-				continue
+			if(/^ *msgctxt.*$/.test(lines[i])) {
+				continue;
 			}
 
 			//console.log(i+" | "+next+" | "+lines[i]);
 
 			// Switch on the next thing to read
-			switch(next){
+			switch(next) {
 
 				// msgid
 				case 0:
@@ -159,9 +155,9 @@ module.exports = function(grunt) {
 
 					if (/msgid /.test(lines[i])) {
 						// Empty msgid
-						if(lines[i] == 'msgid ""'){
+						if(lines[i] == 'msgid ""') {
 							// Case 1: next line is a "msgstr" (comment)
-							if(/^ *msgstr/.test(lines[i+1])){
+							if(/^ *msgstr/.test(lines[i+1])) {
 								next = 1;
 							}
 
@@ -169,7 +165,7 @@ module.exports = function(grunt) {
 							// => read id on multiple lines
 							else {
 
-								while(/^ *".*"$/.test(lines[i+1])){
+								while(/^ *".*"$/.test(lines[i+1])) {
 									id += /^ *"(.*)"$/.exec(lines[i+1])[1];
 									i++;
 								}
@@ -190,7 +186,7 @@ module.exports = function(grunt) {
 				// msgstr comment
 				case 1:
 
-					while(/^".*"$/.test(lines[i+1])){
+					while(/^".*"$/.test(lines[i+1])) {
 						i++;
 					}
 					next = 0;
@@ -201,13 +197,13 @@ module.exports = function(grunt) {
 				case 2:
 
 					// msgstr
-					if(/^ *msgstr/.test(lines[i])){
+					if(/^ *msgstr/.test(lines[i])) {
 
 						msg = "";
 
 						// Multiline (if first line is empty)
-						if(lines[i] == 'msgstr ""'){
-							while(/^ *".*"$/.test(lines[i+1])){
+						if(lines[i] == 'msgstr ""') {
+							while(/^ *".*"$/.test(lines[i+1])) {
 								msg += /^ *"(.*)"$/.exec(lines[i+1])[1];
 								i++;
 							}
@@ -224,18 +220,17 @@ module.exports = function(grunt) {
 					}
 
 					// msgid_plural
-					else if(/^ *msgid_plural/.test(lines[i])){
+					else if(/^ *msgid_plural/.test(lines[i])) {
 
 						id_plural = "";
 
 						// Multiline (if first line is empty)
-						if(lines[i] == 'msgid_plural ""'){
+						if(lines[i] == 'msgid_plural ""') {
 							while(/^ *".*"$/.test(lines[i+1])){
 								id_plural += /^ *"(.*)"$/.exec(lines[i+1])[1];
 								i++;
 							}
 						}
-
 						// Single line
 						else {
 							id_plural = /msgid_plural "(.*)"/.exec(lines[i])[1];
@@ -252,19 +247,22 @@ module.exports = function(grunt) {
 					msg = "";
 
 					// Multiline (if first line is empty)
-					if(lines[i] == 'msgstr[0] ""'){
+					if(lines[i] == 'msgstr[0] ""') {
 						while(/^ *".*"$/.test(lines[i+1])){
 							msg += /^ *"(.*)"$/.exec(lines[i+1])[1];
 							i++;
 						}
 					}
-
 					// Single line
 					else {
 						msg = /msgstr\[0\] "(.*)"/.exec(lines[i])[1];
 					}
 
-					next = 4;
+					if (/msgstr\[1\]/.test(lines[i+1])) {
+						next = 4;
+					} else {
+						next = 0;
+					}
 
 					break;
 
@@ -274,52 +272,55 @@ module.exports = function(grunt) {
 					msg_plural = "";
 
 					// Multiline (if first line is empty)
-					if(lines[i] == 'msgstr[1] ""'){
-						while(/^ *".*"$/.test(lines[i+1])){
+					if(lines[i] == 'msgstr[1] ""') {
+						while(/^ *".*"$/.test(lines[i+1])) {
 							msg_plural += /^ *"(.*)"$/.exec(lines[i+1])[1];
 							i++;
 						}
 					}
-
 					// Single line
 					else {
 						msg_plural = /msgstr\[1\] "(.*)"/.exec(lines[i])[1];
 					}
 
-					next = 5;
 					target[id] = msg;
 					target[id_plural] = msg_plural;
+
+					if (/msgstr\[2\]/.test(lines[i+1])) {
+						next = 5;
+					} else {
+						next = 0;
+					}
 
 					break;
 
 				// msgstr[2]
 				case 5:
 
-					next = 0;
-
 					if (/msgstr\[2\]/.test(lines[i])) {
 						msg_plural = "";
 
 						// Multiline (if first line is empty)
-						if(lines[i] == 'msgstr[2] ""'){
+						if(lines[i] == 'msgstr[2] ""') {
 							while(/^ *".*"$/.test(lines[i+1])){
 								msg_plural += /^ *"(.*)"$/.exec(lines[i+1])[1];
 								i++;
 							}
 						}
-
 						// Single line
 						else {
 							msg_plural = /msgstr\[2\] "(.*)"/.exec(lines[i])[1];
 						}
 
-						next = 0;
 						target[id] = msg;
 						target[id_plural] = msg_plural;
 					}
 
+					next = 0;
+
 					break;
 			}
+
 		}
 		return target;
 	};
