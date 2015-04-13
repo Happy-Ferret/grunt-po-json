@@ -267,7 +267,7 @@ module.exports = function(grunt) {
 					} else {
 						next = 0;
 					}
-					entries[id] = msg;
+					entries[id_plural][0] = msg;
 
 					break;
 			}
