@@ -248,6 +248,7 @@ module.exports = function(grunt) {
 
 				// msgstr[0]
 				case 3:
+					entries[id_plural] = new Array();
 					msg = "";
 					// Multiline (if first line is empty)
 					if (lines[i] == 'msgstr[0] ""') {
@@ -262,7 +263,6 @@ module.exports = function(grunt) {
 					}
 					if (/msgstr\[1\]/.test(lines[i+1])) {
 						pluralCount = 0;
-						entries[id_plural] = new Array();
 						next = 4;
 					} else {
 						next = 0;
